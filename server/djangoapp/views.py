@@ -1,5 +1,6 @@
 from django.http import JsonResponse
-from django.contrib.auth import login, authenticate, logout, login_required
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -8,23 +9,14 @@ from .models import CarMake, CarModel
 from .populate import initiate
 from .restapis import get_request, analyze_review_sentiments, post_review
 
-
-
-# Get an instance of a logger
 logger = logging.getLogger(__name__)
-
 
 @login_required
 def add_review(request):
     if request.method == 'POST':
         try:
-            # Ladda data från begäran
             data = json.loads(request.body)
-            
-            # Anropa metoden för att posta recensionen
             response = post_review(data)
-            
-            # Kontrollera om svar från backend är korrekt
             if response and response.get('status') == 'success':
                 return JsonResponse({"status": 200, "message": "Review posted successfully"})
             else:
@@ -36,40 +28,42 @@ def add_review(request):
     else:
         return JsonResponse({"status": 405, "message": "Method not allowed"}, status=405)
 
-
 def get_dealerships(request, state="All"):
     if state == "All":
         endpoint = "/fetchDealers"
     else:
         endpoint = f"/fetchDealers/{state}"
-    
     dealerships = get_request(endpoint)
     if dealerships is None:
         logger.error(f"Failed to retrieve dealerships from endpoint: {endpoint}")
         return JsonResponse({"status": 500, "message": "Error fetching dealerships"}, status=500)
-    
     return JsonResponse({"status": 200, "dealers": dealerships})
-
-
-
 
 def get_dealer_reviews(request, dealer_id):
     if dealer_id:
         endpoint = f"/fetchReviews/dealer/{dealer_id}"
         reviews = get_request(endpoint)
-        
         if reviews is None:
             return JsonResponse({"status": 500, "message": "Error fetching dealer reviews"}, status=500)
-        
         for review in reviews:
             review_text = review.get('review', '')
             sentiment_response = analyze_review_sentiments(review_text)
             review['sentiment'] = sentiment_response.get('sentiment', 'Unknown') if sentiment_response else 'Unknown'
-        
         return JsonResponse({"status": 200, "reviews": reviews})
     else:
         return JsonResponse({"status": 400, "message": "Bad Request"}, status=400)
 
+def get_dealer_details(request, dealer_id):
+    try:
+        dealer = CarMake.objects.get(pk=dealer_id)
+        dealer_data = {
+            "id": dealer.id,
+            "name": dealer.name,
+            "description": dealer.description
+        }
+        return JsonResponse({"status": 200, "dealer": dealer_data})
+    except CarMake.DoesNotExist:
+        return JsonResponse({"status": 404, "message": "Dealer not found"}, status=404)
 
 @csrf_exempt
 def login_user(request):
@@ -78,15 +72,11 @@ def login_user(request):
             data = json.loads(request.body)
             username = data.get('userName')
             password = data.get('password')
-            
             if not username or not password:
                 response_data = {"status": "Failed", "message": "Username and password are required"}
                 logger.warning("Login attempt with missing username or password.")
                 return JsonResponse(response_data)
-            
-            # Authenticate the user
             user = authenticate(username=username, password=password)
-            
             if user is not None:
                 login(request, user)
                 response_data = {"userName": username, "status": "Authenticated"}
@@ -103,7 +93,6 @@ def login_user(request):
     else:
         response_data = {"status": "Failed", "message": "Only POST method is allowed"}
         logger.warning("Login attempt with non-POST method.")
-    
     return JsonResponse(response_data)
 
 @csrf_exempt
@@ -115,17 +104,19 @@ def logout_user(request):
                 logout(request)
                 response_data = {"userName": username}
                 logger.info(f"User {username} logged out successfully.")
+                return JsonResponse(response_data)
             else:
                 response_data = {"status": "Failed", "message": "No user is logged in"}
                 logger.warning("Logout attempt with no authenticated user.")
+                return JsonResponse(response_data, status=400)
         except Exception as e:
             response_data = {"status": "Failed", "message": str(e)}
             logger.error(f"Unexpected error during logout: {str(e)}")
+            return JsonResponse(response_data, status=500)
     else:
         response_data = {"status": "Failed", "message": "Only GET method is allowed"}
         logger.warning("Logout attempt with non-GET method.")
-    
-    return JsonResponse(response_data)
+        return JsonResponse(response_data, status=405)
 
 @csrf_exempt
 def register_user(request):
@@ -137,19 +128,14 @@ def register_user(request):
             first_name = data.get('firstName')
             last_name = data.get('lastName')
             email = data.get('email')
-            
             if not username or not password or not email:
                 response_data = {"status": "Failed", "message": "Username, password, and email are required"}
                 logger.warning("Registration attempt with missing fields.")
                 return JsonResponse(response_data)
-
-            # Check if the user already exists
             if User.objects.filter(username=username).exists():
                 response_data = {"status": "Failed", "error": "Already Registered"}
                 logger.warning(f"Registration attempt with already existing username: {username}")
                 return JsonResponse(response_data)
-
-            # Create a new user
             user = User.objects.create_user(
                 username=username,
                 password=password,
@@ -157,10 +143,7 @@ def register_user(request):
                 last_name=last_name,
                 email=email
             )
-            
-            # Log in the user
             login(request, user)
-            
             response_data = {"userName": username, "status": "Registered"}
             logger.info(f"User {username} registered and logged in successfully.")
         except json.JSONDecodeError:
@@ -172,7 +155,6 @@ def register_user(request):
     else:
         response_data = {"status": "Failed", "message": "Only POST method is allowed"}
         logger.warning("Registration attempt with non-POST method.")
-    
     return JsonResponse(response_data)
 
 def get_cars(request):
