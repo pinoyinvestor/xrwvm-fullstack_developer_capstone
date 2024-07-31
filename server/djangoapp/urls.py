@@ -6,6 +6,7 @@ from . import views
 app_name = 'djangoapp'
 
 urlpatterns = [
+    path('get_cars/', views.get_cars, name='get_cars'),
     # Path for user login
          path('login/', views.login_user, name='login'),
     # Path for user logout

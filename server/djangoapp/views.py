@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
+from .models import CarMake, CarModel
+from .populate import initiate  # Importera initiate-funktionen
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -111,3 +113,13 @@ def register_user(request):
         logger.warning("Registration attempt with non-POST method.")
     
     return JsonResponse(response_data)
+
+def get_cars(request):
+    count = CarMake.objects.filter().count()
+    if count == 0:
+        initiate()  # Anropa initiate för att fylla databasen om den är tom
+    car_models = CarModel.objects.select_related('car_make')
+    cars = []
+    for car_model in car_models:
+        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
+    return JsonResponse({"CarModels": cars})
