@@ -24,56 +24,44 @@ sentiment_analyzer_url = os.getenv(
     "cloud"
 )
 
-
 def get_request(endpoint, **kwargs):
-    # Bygg query-string från kwargs
-    params = "&".join(f"{key}={value}" for key, value in kwargs.items())
+    params = ""
+    if kwargs:
+        for key, value in kwargs.items():
+            params = params + key + "=" + value + "&"
+    
+    request_url = backend_url + endpoint + "?" + params
 
-    # Bygg URL med query-string
-    request_url = f"{backend_url}{endpoint}?{params}"
-    logger.info(f"GET from {request_url}")
-
+    print("GET from {} ".format(request_url))
     try:
-        # Gör GET-anrop till URL:en
+        # Anropar get-metoden i requests-biblioteket med URL och parametrar
         response = requests.get(request_url)
-        # Kontrollera om anropet lyckades
-        response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:
-        # Hantera alla nätverks- eller HTTP-fel
-        logger.error(f"Network exception occurred: {e}")
-        return None
+    except:
+        # Om något fel inträffar
+        print("Network exception occurred")
+    finally:
+        print("GET request call complete!")
+
+
 
 
 def analyze_review_sentiments(text):
-    # URL för sentimentanalys
-    request_url = f"{sentiment_analyzer_url}analyze/{text}"
-    logger.info(f"GET from {request_url}")
-
+    request_url = sentiment_analyzer_url+"analyze/"+text
     try:
-        # Gör GET-anrop till sentimentanalys URL:en
+        # Call get method of requests library with URL and parameters
         response = requests.get(request_url)
-        # Kontrollera om anropet lyckades
-        response.raise_for_status()
         return response.json()
-    except requests.RequestException as e:
-        # Hantera alla nätverks- eller HTTP-fel
-        logger.error(f"Network exception occurred: {e}")
-        return None
+    except Exception as err:
+        print(f"Unexpected {err=}, {type(err)=}")
+        print("Network exception occurred")
 
 
 def post_review(data_dict):
-    # URL för att posta en recension
-    request_url = f"{backend_url}reviews"
-    logger.info(f"POST to {request_url} with data {data_dict}")
-
+    request_url = backend_url+"/insert_review"
     try:
-        # Gör POST-anrop med data
-        response = requests.post(request_url, json=data_dict)
-        # Kontrollera om anropet lyckades
-        response.raise_for_status()
+        response = requests.post(request_url,json=data_dict)
+        print(response.json())
         return response.json()
-    except requests.RequestException as e:
-        # Hantera alla nätverks- eller HTTP-fel
-        logger.error(f"Network exception occurred: {e}")
-        return None
+    except:
+        print("Network exception occurred")

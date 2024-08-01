@@ -1,4 +1,3 @@
-# Adjust lines that are too long and add blank lines between functions
 from django.http import JsonResponse
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -10,53 +9,52 @@ from .models import CarMake, CarModel
 from .populate import initiate
 from .restapis import get_request, analyze_review_sentiments, post_review
 
-
 logger = logging.getLogger(__name__)
 
 
-@login_required
+@csrf_exempt
 def add_review(request):
     if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            response = post_review(data)
-            if response and response.get('status') == 'success':
-                return JsonResponse({"status": 200, "message": "Review posted successfully"})
-            else:
-                return JsonResponse({"status": 500, "message": "Error in posting review"}, status=500)
-        except json.JSONDecodeError:
-            return JsonResponse({"status": 400, "message": "Invalid JSON format"}, status=400)
-        except Exception as e:
-            return JsonResponse({"status": 500, "message": str(e)}, status=500)
+        if request.user.is_authenticated:
+            try:
+                data = json.loads(request.body)
+                response = post_review(data)
+                print("Post response:", response)  # Utskrift av svaret för felsökning
+                if response and response.get('status') == 'success':
+                    return JsonResponse({"status": 200, "message": "Review posted successfully"})
+                else:
+                    return JsonResponse({"status": 500, "message": "Error in posting review"}, status=500)
+            except json.JSONDecodeError:
+                return JsonResponse({"status": 400, "message": "Invalid JSON format"}, status=400)
+            except Exception as e:
+                return JsonResponse({"status": 500, "message": str(e)}, status=500)
+        else:
+            return JsonResponse({"status": 403, "message": "Unauthorized"}, status=403)
     else:
         return JsonResponse({"status": 405, "message": "Method not allowed"}, status=405)
 
-
+        
 def get_dealerships(request, state="All"):
-    if state == "All":
+    if(state == "All"):
         endpoint = "/fetchDealers"
     else:
-        endpoint = f"/fetchDealers/{state}"
+        endpoint = "/fetchDealers/"+state
     dealerships = get_request(endpoint)
-    if dealerships is None:
-        logger.error(f"Failed to retrieve dealerships from endpoint: {endpoint}")
-        return JsonResponse({"status": 500, "message": "Error fetching dealerships"}, status=500)
-    return JsonResponse({"status": 200, "dealers": dealerships})
+    return JsonResponse({"status":200,"dealers":dealerships})
 
 
 def get_dealer_reviews(request, dealer_id):
+    # if dealer id has been provided
     if dealer_id:
-        endpoint = f"/fetchReviews/dealer/{dealer_id}"
+        endpoint = "/fetchReviews/dealer/" + str(dealer_id)
         reviews = get_request(endpoint)
-        if reviews is None:
-            return JsonResponse({"status": 500, "message": "Error fetching dealer reviews"}, status=500)
-        for review in reviews:
-            review_text = review.get('review', '')
-            sentiment_response = analyze_review_sentiments(review_text)
-            review['sentiment'] = sentiment_response.get('sentiment', 'Unknown') if sentiment_response else 'Unknown'
+        for review_detail in reviews:
+            response = analyze_review_sentiments(review_detail['review'])
+            print(response)
+            review_detail['sentiment'] = response['sentiment']
         return JsonResponse({"status": 200, "reviews": reviews})
     else:
-        return JsonResponse({"status": 400, "message": "Bad Request"}, status=400)
+        return JsonResponse({"status": 400, "message": "Bad Request"})
 
 
 def get_dealer_details(request, dealer_id):
