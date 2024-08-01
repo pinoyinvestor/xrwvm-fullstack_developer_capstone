@@ -26,9 +26,9 @@ const Dealerships = require('./dealership');
 (async () => {
   try {
     await Reviews.deleteMany({});
-    await Reviews.insertMany(reviews_data['reviews']);
+    await Reviews.insertMany(reviews_data.reviews);
     await Dealerships.deleteMany({});
-    await Dealerships.insertMany(dealerships_data['dealerships']);
+    await Dealerships.insertMany(dealerships_data.dealerships);
     console.log("Database seeded successfully");
   } catch (error) {
     console.error('Error seeding the database:', error);
