@@ -9,7 +9,9 @@ from .models import CarMake, CarModel
 from .populate import initiate
 from .restapis import get_request, analyze_review_sentiments, post_review
 
+
 logger = logging.getLogger(__name__)
+
 
 @login_required
 def add_review(request):
@@ -28,6 +30,7 @@ def add_review(request):
     else:
         return JsonResponse({"status": 405, "message": "Method not allowed"}, status=405)
 
+
 def get_dealerships(request, state="All"):
     if state == "All":
         endpoint = "/fetchDealers"
@@ -38,6 +41,7 @@ def get_dealerships(request, state="All"):
         logger.error(f"Failed to retrieve dealerships from endpoint: {endpoint}")
         return JsonResponse({"status": 500, "message": "Error fetching dealerships"}, status=500)
     return JsonResponse({"status": 200, "dealers": dealerships})
+
 
 def get_dealer_reviews(request, dealer_id):
     if dealer_id:
@@ -53,13 +57,15 @@ def get_dealer_reviews(request, dealer_id):
     else:
         return JsonResponse({"status": 400, "message": "Bad Request"}, status=400)
 
+
 def get_dealer_details(request, dealer_id):
-    if (dealer_id):
-        endpoint = "/fetchDealer/"+str(dealer_id)
+    if dealer_id:
+        endpoint = "/fetchDealer/" + str(dealer_id)
         dealership = get_request(endpoint)
         return JsonResponse({"status": 200, "dealer": dealership})
     else:
         return JsonResponse({"status": 400, "message": "Bad Request"})
+
 
 @csrf_exempt
 def login_user(request):
@@ -91,6 +97,7 @@ def login_user(request):
         logger.warning("Login attempt with non-POST method.")
     return JsonResponse(response_data)
 
+
 @csrf_exempt
 def logout_user(request):
     if request.method == 'GET':
@@ -113,6 +120,7 @@ def logout_user(request):
         response_data = {"status": "Failed", "message": "Only GET method is allowed"}
         logger.warning("Logout attempt with non-GET method.")
         return JsonResponse(response_data, status=405)
+
 
 @csrf_exempt
 def register_user(request):
@@ -152,6 +160,7 @@ def register_user(request):
         response_data = {"status": "Failed", "message": "Only POST method is allowed"}
         logger.warning("Registration attempt with non-POST method.")
     return JsonResponse(response_data)
+
 
 def get_cars(request):
     count = CarMake.objects.filter().count()

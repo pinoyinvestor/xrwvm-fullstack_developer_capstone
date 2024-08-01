@@ -1,6 +1,6 @@
-# models.py
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 class CarMake(models.Model):
     name = models.CharField(max_length=100)
@@ -9,6 +9,7 @@ class CarMake(models.Model):
     def __str__(self):
         return self.name
 
+
 class CarModel(models.Model):
     CAR_TYPES = [
         ('SEDAN', 'Sedan'),
@@ -16,7 +17,8 @@ class CarModel(models.Model):
         ('WAGON', 'Wagon'),
     ]
     
-    car_make = models.ForeignKey(CarMake, on_delete=models.CASCADE, related_name='car_models')
+    car_make = models.ForeignKey(
+        CarMake, on_delete=models.CASCADE, related_name='car_models')
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=10, choices=CAR_TYPES, default='SUV')
     year = models.IntegerField(
