@@ -54,16 +54,12 @@ def get_dealer_reviews(request, dealer_id):
         return JsonResponse({"status": 400, "message": "Bad Request"}, status=400)
 
 def get_dealer_details(request, dealer_id):
-    try:
-        dealer = CarMake.objects.get(pk=dealer_id)
-        dealer_data = {
-            "id": dealer.id,
-            "name": dealer.name,
-            "description": dealer.description
-        }
-        return JsonResponse({"status": 200, "dealer": dealer_data})
-    except CarMake.DoesNotExist:
-        return JsonResponse({"status": 404, "message": "Dealer not found"}, status=404)
+    if (dealer_id):
+        endpoint = "/fetchDealer/"+str(dealer_id)
+        dealership = get_request(endpoint)
+        return JsonResponse({"status": 200, "dealer": dealership})
+    else:
+        return JsonResponse({"status": 400, "message": "Bad Request"})
 
 @csrf_exempt
 def login_user(request):
