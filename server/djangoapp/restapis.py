@@ -3,7 +3,6 @@ import requests
 from dotenv import load_dotenv
 import logging
 
-
 # Konfigurera loggning
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,13 +13,14 @@ load_dotenv()
 # Backend URL och Sentiment Analyzer URL från miljövariabler
 backend_url = os.getenv(
     'BACKEND_URL',
-    "https://danielhedenb-3030.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai"
+    "https://danielhedenb-3030.theiadockernext-1-labs-prod-theiak8s-4-"
+    "tor01.proxy.cognitiveclass.ai"
 )
 sentiment_analyzer_url = os.getenv(
     'SENTIMENT_ANALYZER_URL',
-    "https://sentianalyzer.1k348mhoailo.us-south.codeengine.appdomain.cloud"
+    "https://sentianalyzer.1k348mhoailo.us-south.codeengine.appdomain."
+    "cloud"
 )
-
 
 def get_request(endpoint, **kwargs):
     # Bygg query-string från kwargs
@@ -41,7 +41,6 @@ def get_request(endpoint, **kwargs):
         logger.error(f"Network exception occurred: {e}")
         return None
 
-
 def analyze_review_sentiments(text):
     # URL för sentimentanalys
     request_url = f"{sentiment_analyzer_url}analyze/{text}"
@@ -57,7 +56,6 @@ def analyze_review_sentiments(text):
         # Hantera alla nätverks- eller HTTP-fel
         logger.error(f"Network exception occurred: {e}")
         return None
-
 
 def post_review(data_dict):
     # URL för att posta en recension
