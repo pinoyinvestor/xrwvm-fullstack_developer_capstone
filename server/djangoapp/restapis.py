@@ -14,11 +14,11 @@ load_dotenv()
 # Backend URL och Sentiment Analyzer URL från miljövariabler
 backend_url = os.getenv(
     'BACKEND_URL',
-    "https://danielhedenb-3030.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai"
+    "https://danielhedenb-3030.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai"
 )
 sentiment_analyzer_url = os.getenv(
     'SENTIMENT_ANALYZER_URL',
-    "https://sentianalyzer.1k1wccn9oz0e.us-south.codeengine.appdomain.cloud"
+    "https://sentianalyzer.1k348mhoailo.us-south.codeengine.appdomain.cloud"
 )
 
 
